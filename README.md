@@ -51,6 +51,9 @@
 1. 克隆本项目仓库
 2. 安装必要的依赖库
 
+```bash
+pip install -r requirements.txt
+```
 
 
   

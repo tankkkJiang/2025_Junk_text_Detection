@@ -1,0 +1,6 @@
+numpy
+tqdm
+gensim
+scikit-learn
+imbalanced-learn
+pypinyin
