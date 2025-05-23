@@ -24,9 +24,10 @@
 
 ### 2.2 核心功能文件
 
-把所有训练样本的「句向量」当作特征（train_word_vectors），对应的标签当作目标，喂给 LogisticRegression 做训练； 测试时也是把测试样本的句向量（test_word_vectors）输入到同一个训练好的模型里，输出预测标签。
+`main.py`把所有训练样本的「句向量」当作特征（train_word_vectors），对应的标签当作目标，喂给 LogisticRegression 做训练； 测试时也是把测试样本的句向量（test_word_vectors）输入到同一个训练好的模型里，输出预测标签。
 预测标签就是分类器对每条短信判断后的类别标识，0：表示“正常”短信；1：表示“垃圾”短信。
 
+流程：字级别 Word2Vec → 声形相似度加权 → 动态路由句向量 → LogReg
 
 - `ssc_similarity.py`：负责计算汉字之间的字音和字形相似性。它会综合字音编码和字形编码的相似度，得出最终的相似性得分。
 - `utils.py`：包含一系列实用工具函数，像汉字编码生成、统计汉字出现次数、构建并加载相似性矩阵等操作都由其完成。
@@ -64,7 +65,7 @@ pip install -r requirements.txt
 
 ## 4. 改进
 
-### 4.1 
+### 4.1 缓存声形相似度矩阵
 
 在运行`main.py`过程中可以发现运行下述两步时：
 1. Counting characters：遍历所有文本，为每一行里的每个汉字累加出现次数。
@@ -77,3 +78,5 @@ pip install -r requirements.txt
 2. res/similarity_matrix.pkl 已存在，就直接 load_sim_mat 读入，跳过“compute_sim_mat”；
 
 只在这些缓存文件不存在时，才调用原来的耗时函数并写入缓存。
+
+### 4.2 
