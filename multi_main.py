@@ -1,4 +1,3 @@
-# -*- coding: utf‑8 -*-
 """
 multi_main.py
 ========================================================
@@ -42,7 +41,7 @@ def read_data(path):
 
 def evaluate(name, y_true, y_pred, t0, t1):
     print(f'\n==== {name} ====')
-    print(f'耗时: {(t1‑t0):.2f}s')
+    print(f'耗时: {(t1-t0):.2f}s')
     print('Accuracy:', accuracy_score(y_true, y_pred))
     print('Macro‑F1:', f1_score(y_true, y_pred, average="macro"))
     print('混淆矩阵:\n', confusion_matrix(y_true, y_pred))
