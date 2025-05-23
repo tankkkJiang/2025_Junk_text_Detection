@@ -198,11 +198,6 @@ def evaluation(test_tags, predictions):
 if __name__ == "__main__":
     tag, text = read_data(os.path.join(DEFAULT_DATA_DIR, 'dataset.txt'))
 
-    # 逐字统计并编码，输出到 hanzi.txt；基于声形码计算相似度矩阵
-    chinese_characters, chinese_characters_count, chinese_characters_code = \
-        count_chinese_characters(text, os.path.join(DEFAULT_DATA_DIR, 'hanzi.txt'))
-    sim_mat = compute_sim_mat(chinese_characters, chinese_characters_code)
-
     os.makedirs('res', exist_ok=True)
     HANZI_CACHE = os.path.join('res', 'hanzi.txt')
     SIMMAT_CACHE = os.path.join('res', 'similarity_matrix.pkl')
