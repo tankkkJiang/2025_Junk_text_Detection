@@ -212,6 +212,12 @@ if __name__ == "__main__":
             text,  # 原始文本
             HANZI_CACHE  # 写入 res/hanzi.txt
             )
+    # 把所有频次从字符串转成整数
+    chinese_characters_count = {
+        char: int(cnt)
+        for char, cnt in chinese_characters_count.items()
+    }
+
     # 声形相似度矩阵
     if os.path.exists(SIMMAT_CACHE):
         sim_mat = load_sim_mat(SIMMAT_CACHE)
