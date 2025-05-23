@@ -11,7 +11,6 @@ from sklearn.model_selection import train_test_split
 from sklearn.metrics import classification_report, confusion_matrix, f1_score
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.svm import LinearSVC          # 速度快、精度高；如需概率换成 LogisticRegression
-from sklearn.linear_model import LogisticRegression
 
 # ---------------- 可复用原工具 ----------------
 from utils import tokenize_and_remove_stopwords  # 仍然调用原 utils 的清洗+停用符号过滤
@@ -24,9 +23,7 @@ def read_data(path):
     tag, text = zip(*lines)
     return list(tag), list(text)
 
-# ————————————————————————————————————————————————————————
 # 方案 1：TF‑IDF + LinearSVC （推荐）
-# ————————————————————————————————————————————————————————
 def train_tfidf_svc(x_train, y_train, x_test):
     """返回预测结果、向量化器与模型"""
     # char 1‑3 gram；min_df 去掉极低频，节省稀疏矩阵大小
@@ -39,29 +36,7 @@ def train_tfidf_svc(x_train, y_train, x_test):
     pred = clf.predict(x_test_vec)
     return pred, vectorizer, clf
 
-# ————————————————————————————————————————————————————————
-# 方案 2：沿用原 Word2Vec+句向量+LogReg baseline，便于公平对比
-#        （只移植“generate_*”函数，不再做相似矩阵）
-# ————————————————————————————————————————————————————————
-from gensim.models import Word2Vec
-def word2vec_sentence_vec(texts, dim=100):
-    model = Word2Vec(sentences=texts, vector_size=dim, window=5, min_count=1, sg=0)
-    wv = model.wv
-    sent_vecs = []
-    for sent in texts:
-        emb = np.mean([wv[c] for c in sent if c in wv], axis=0)
-        sent_vecs.append(emb if emb.size else np.zeros(dim))
-    return np.array(sent_vecs)
 
-def train_w2v_logreg(x_train_tok, y_train, x_test_tok):
-    x_train_vec = word2vec_sentence_vec(x_train_tok)
-    x_test_vec  = word2vec_sentence_vec(x_test_tok)
-    logreg = LogisticRegression(max_iter=1000)
-    logreg.fit(x_train_vec, y_train)
-    pred = logreg.predict(x_test_vec)
-    return pred
-
-# ————————————————————————————————————————————————————————
 def evaluate(name, true_y, pred_y, start_t, end_t):
     print(f'\n==== {name} ====')
     print(f'耗时: {(end_t-start_t):.2f}s')
