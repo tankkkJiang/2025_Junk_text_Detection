@@ -1,3 +1,7 @@
+"""
+main.py
+"""
+
 from tqdm import tqdm
 import re
 from utils import *

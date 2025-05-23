@@ -1,3 +1,7 @@
+"""
+ssc_similarity.py
+"""
+
 # 声音和形状的权重
 soundWeight=0.5
 shapeWeight=0.5

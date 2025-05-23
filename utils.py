@@ -1,3 +1,7 @@
+"""
+utils.py
+"""
+
 from pypinyin import pinyin, Style
 from four_corner_method import FourCornerMethod
 from ssc_similarity import *
