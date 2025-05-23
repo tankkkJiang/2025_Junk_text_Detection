@@ -210,21 +210,21 @@ def update_sim_mat(new_characters, chinese_characters_code, sim_mat):
     return sim_mat
 
 # 构建字符相似性网络（用矩阵形式表示）
-#def compute_sim_mat(chinese_characters, chinese_characters_code):
-    sim_mat = [[0] * len(chinese_characters) for _ in range(len(chinese_characters))]
-    for i in tqdm(range(len(chinese_characters)), desc='Constructing Similarity Matrix', unit='i'):
-        for j in range(i, len(chinese_characters)):
-            similarity = computeSSCSimilarity(chinese_characters_code[chinese_characters[i]], chinese_characters_code[chinese_characters[j]])
-            sim_mat[i][j] = similarity
-            sim_mat[j][i] = similarity
-
-    # 将结果写入文件
-    output_file = 'res/similarity_matrix.txt'
-    with open(output_file, 'w', encoding='utf-8') as f:
-        for row in sim_mat:
-            f.write('\t'.join(map(str, row)) + '\n')
-
-    return sim_mat
+# def compute_sim_mat(chinese_characters, chinese_characters_code):
+#     sim_mat = [[0] * len(chinese_characters) for _ in range(len(chinese_characters))]
+#     for i in tqdm(range(len(chinese_characters)), desc='Constructing Similarity Matrix', unit='i'):
+#         for j in range(i, len(chinese_characters)):
+#             similarity = computeSSCSimilarity(chinese_characters_code[chinese_characters[i]], chinese_characters_code[chinese_characters[j]])
+#             sim_mat[i][j] = similarity
+#             sim_mat[j][i] = similarity
+#
+#     # 将结果写入文件
+#     output_file = 'res/similarity_matrix.txt'
+#     with open(output_file, 'w', encoding='utf-8') as f:
+#         for row in sim_mat:
+#             f.write('\t'.join(map(str, row)) + '\n')
+#
+#     return sim_mat
 
 def clean_text(dataset):
     """去除非中英文、数字和空白"""

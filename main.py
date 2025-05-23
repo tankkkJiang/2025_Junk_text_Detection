@@ -202,6 +202,29 @@ if __name__ == "__main__":
     chinese_characters, chinese_characters_count, chinese_characters_code = \
         count_chinese_characters(text, os.path.join(DEFAULT_DATA_DIR, 'hanzi.txt'))
     sim_mat = compute_sim_mat(chinese_characters, chinese_characters_code)
+
+    os.makedirs('res', exist_ok=True)
+    HANZI_CACHE = os.path.join('res', 'hanzi.txt')
+    SIMMAT_CACHE = os.path.join('res', 'similarity_matrix.pkl')
+    # 汉字统计 & 编码
+    if os.path.exists(HANZI_CACHE):
+        chinese_characters, chinese_characters_count, chinese_characters_code = \
+        load_chinese_characters(HANZI_CACHE)
+    else:
+        chinese_characters, chinese_characters_count, chinese_characters_code = \
+        count_chinese_characters(
+            text,  # 原始文本
+            HANZI_CACHE  # 写入 res/hanzi.txt
+            )
+    # 声形相似度矩阵
+    if os.path.exists(SIMMAT_CACHE):
+        sim_mat = load_sim_mat(SIMMAT_CACHE)
+    else:
+        sim_mat = compute_sim_mat(
+            chinese_characters,
+            chinese_characters_code
+            # compute_sim_mat 本身会写入 res/similarity_matrix.pkl
+        )
     
     #text_train, text_test, tag_train, tag_test = divide_dataset(tag, text)
 

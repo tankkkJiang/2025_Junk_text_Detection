@@ -1,12 +1,12 @@
 # 垃圾文本检测
 
-## 系统概述
+## 1. 系统概述
 
 本系统专注于中文文本处理与分类，借助字音和字形的相似性，构建了一套全面的中文文本分析框架。系统包含汉字编码、相似性计算、文本预处理、特征向量生成以及分类评估等多个模块。
 
-## 代码说明
+## 2. 代码说明
 
-### 代码架构
+### 2.1 代码架构
 ```bash
 2025_Junk_text_Detection/
 ├─ data/                            # 存放所有外部数据文件
@@ -22,7 +22,7 @@
 └─ README.md                        # 项目说明与使用指南
 ```
 
-### 核心功能文件
+### 2.2 核心功能文件
 
 把所有训练样本的「句向量」当作特征（train_word_vectors），对应的标签当作目标，喂给 LogisticRegression 做训练； 测试时也是把测试样本的句向量（test_word_vectors）输入到同一个训练好的模型里，输出预测标签。
 预测标签就是分类器对每条短信判断后的类别标识，0：表示“正常”短信；1：表示“垃圾”短信。
@@ -34,14 +34,13 @@
 - `main.py`：作为项目的主程序，它整合了数据读取、文本预处理、特征向量生成、模型训练以及分类评估等全流程操作
 
 
-
-### 数据文件夹
+### 2.3 数据文件夹
 
 - `data/`：存放训练和测试所需的数据集。
 
-## 安装与使用指南
+## 3. 安装与使用指南
 
-### 环境依赖
+### 3.1 环境依赖
 
 - Python 3.7 及以上版本
 - 所需 Python 库
@@ -54,7 +53,7 @@
   tqdm
   ```
 
-### 安装步骤
+### 3.2 安装步骤
 
 1. 克隆本项目仓库
 2. 安装必要的依赖库
@@ -63,7 +62,18 @@
 pip install -r requirements.txt
 ```
 
+## 4. 改进
 
-  
+### 4.1 
 
+在运行`main.py`过程中可以发现运行下述两步时：
+1. Counting characters：遍历所有文本，为每一行里的每个汉字累加出现次数。
+2. Computing Character Code：对上一步统计出来的每个不同汉字，逐个调用 ChineseCharacterCoder().generate_character_code（拼音＋四角码＋笔画码），并把结果写入 hanzi.txt。
 
+因为汉字种类只有几千个，这一步在 CPU 上要跑 O(#chars × 编码开销) 大约十几分钟。
+
+我们可以尝试把中间产物（hanzi.txt 和 similarity_matrix.pkl）都存到 res/ 目录下，后续每次运行时：
+1. 如果 res/hanzi.txt 已存在，就直接调用 load_chinese_characters 读入，跳过“Counting”+“Computing Character Code”；
+2. res/similarity_matrix.pkl 已存在，就直接 load_sim_mat 读入，跳过“compute_sim_mat”；
+
+只在这些缓存文件不存在时，才调用原来的耗时函数并写入缓存。
