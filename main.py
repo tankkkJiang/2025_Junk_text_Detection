@@ -15,8 +15,14 @@ import os
 
 DEFAULT_DATA_DIR = 'data'    # ← 根据需要修改整个数据文件夹名称
 
-# 读取数据集
+
 def read_data(filename):
+    """
+    读取原始语料，每行格式 “标签<TAB>文本”
+    返回：
+        tag  ：标签列表，如 ['0','1',...]
+        text ：原始文本列表，与标签一一对应
+    """
     with open(filename, 'r', encoding='utf-8') as f:
         text_data = f.readlines()
 
@@ -28,14 +34,23 @@ def read_data(filename):
 
     return tag, text
 
-# 将数据集划分为训练集和测试集
 def divide_dataset(tag, vector):
+    """
+    按 50%:50% 划分训练集和测试集
+    tag    : 标签列表
+    vector : 与标签对应的特征向量列表
+    返回：train_vector, test_vector, train_tag, test_tag
+    """
     train_vector, test_vector, train_tag, test_tag = train_test_split(vector, tag, test_size=0.5, random_state=42)
 
     return train_vector, test_vector, train_tag, test_tag
 
-# 文本清洗
 def clean_text(dataset):
+    """
+    文本清洗：移除所有非中英文、数字和空格字符
+    dataset : 原始文本列表
+    返回     : 清洗后的文本列表
+    """
     cleaned_text = []
     for text in tqdm(dataset, desc='Cleaning text'):
         clean = re.sub(r'[^\u4e00-\u9fa5a-zA-Z0-9\s]', '', text)
@@ -44,6 +59,11 @@ def clean_text(dataset):
 
 # 停用词处理和文本分割
 def tokenize_and_remove_stopwords(dataset):
+    """
+    分词+去停用符号：逐字符扫描，只保留中文且不在停用词表中的字符
+    dataset : 清洗后的文本列表
+    返回     : “分词”后（纯汉字串）列表
+    """
     stopwords_file = os.path.join(DEFAULT_DATA_DIR, 'hit_stopwords.txt')
     with open(stopwords_file, 'r', encoding='utf-8') as file:
         stopwords = {line.strip() for line in file}
@@ -55,8 +75,13 @@ def tokenize_and_remove_stopwords(dataset):
 
     return tokenized_text
 
-# 为每个汉字生成初始特征向量
 def generate_w2v_vectors(tokenized_text, d=100):
+    """
+    训练 Word2Vec 并提取每个字符的初始向量
+    tokenized_text : 分词后文本列表（字符序列列表）
+    d              : 向量维度
+    返回           : dict，字符->向量
+    """
     model = Word2Vec(sentences=tokenized_text, vector_size=d, window=5, min_count=1, sg=0)
     word_vectors = model.wv
 
@@ -68,16 +93,28 @@ def generate_w2v_vectors(tokenized_text, d=100):
 
     return w2v_vectors
 
-# 为语料库中不曾存在的汉字生成字符向量并动态更新语料库
 def update(w2v_vectors, text, character, d=100):
+    """
+    动态更新：若新字符不在原模型中，则重新训练 Word2Vec 获取其向量
+    仅在 generate_char_vectors 内部调用
+    """
     model = Word2Vec(sentences=text, vector_size=d, window=5, min_count=1, sg=0)
     word_vectors = model.wv
     w2v_vectors[character] = word_vectors[character]
 
     return w2v_vectors
 
-# 根据字符相似性网络生成最终的字嵌入向量
 def generate_char_vectors(chinese_characters, w2v_vectors, sim_mat, text, chinese_characters_count, threshold=0.6):
+    """
+    基于声形相似度矩阵为每个字符生成加权向量
+    chinese_characters       : 字符列表
+    w2v_vectors             : 字->初始向量 dict
+    sim_mat                 : 声形相似度矩阵
+    text                    : 原始文本列表，用于 update
+    chinese_characters_count: 频次 dict
+    threshold               : 相似度阈值（>= 才加入聚合）
+    返回                   : dict，字符->加权向量
+    """
     char_vectors = {}
     for i in tqdm(range(len(chinese_characters)), desc='Generating char vectors'):
         character = chinese_characters[i]
@@ -97,8 +134,14 @@ def generate_char_vectors(chinese_characters, w2v_vectors, sim_mat, text, chines
 
     return char_vectors
 
-# 根据字嵌入向量生成句子嵌入向量
 def generate_sentence_vectors(texts, char_vectors, d=100):
+    """
+    两层动态路由聚合为句向量（重构论文中的 α̂ 逻辑）
+    texts        : 分词后文本列表
+    char_vectors : 字->加权向量 dict
+    d            : 向量维度
+    返回        : 句向量列表
+    """
     sentence_vectors = []
     for text in tqdm(texts, desc='Generating sentence vectors'):
         alpha = np.zeros((len(text), len(text)))
@@ -123,6 +166,15 @@ def generate_sentence_vectors(texts, char_vectors, d=100):
 
 # 垃圾文本分类
 def spam_classification(train_tags, train_word_vectors, test_word_vectors):
+    """
+    逻辑回归分类
+    train_tags          : 训练标签列表
+    train_word_vectors  : 训练特征矩阵（列表或 ndarray）
+    test_word_vectors   : 测试特征矩阵
+    返回                : 预测标签列表
+    """
+
+    # 如需平衡类可启用下面两行
     #oversampler = RandomOverSampler(sampling_strategy='auto', random_state=42)
     #train_word_vectors, train_tags = oversampler.fit_resample(train_word_vectors, train_tags)
 
@@ -146,6 +198,7 @@ def evaluation(test_tags, predictions):
 if __name__ == "__main__":
     tag, text = read_data(os.path.join(DEFAULT_DATA_DIR, 'dataset.txt'))
 
+    # 逐字统计并编码，输出到 hanzi.txt；基于声形码计算相似度矩阵
     chinese_characters, chinese_characters_count, chinese_characters_code = \
         count_chinese_characters(text, os.path.join(DEFAULT_DATA_DIR, 'hanzi.txt'))
     sim_mat = compute_sim_mat(chinese_characters, chinese_characters_code)
@@ -154,7 +207,11 @@ if __name__ == "__main__":
 
     cleaned_text = clean_text(text)
     tokenized_text = tokenize_and_remove_stopwords(cleaned_text)
+
+    # 训练Word2Vec & 字向量
     w2v_vectors = generate_w2v_vectors(tokenized_text)
+
+    # 基于相似度加权的字向量 & 句向量
     char_vectors = generate_char_vectors(chinese_characters, w2v_vectors, sim_mat, text, chinese_characters_count)
     sentence_vectors = generate_sentence_vectors(tokenized_text, char_vectors)
     
