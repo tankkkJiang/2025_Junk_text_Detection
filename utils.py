@@ -9,6 +9,7 @@ from tqdm import tqdm
 import pickle
 import numpy as np
 import os
+import re
 DEFAULT_DATA_DIR = 'data'    # ← 与 main.py 保持一致
 
 class ChineseCharacterCoder:
@@ -224,6 +225,25 @@ def update_sim_mat(new_characters, chinese_characters_code, sim_mat):
             f.write('\t'.join(map(str, row)) + '\n')
 
     return sim_mat
+
+def clean_text(dataset):
+    """去除非中英文、数字和空白"""
+    cleaned = []
+    for txt in tqdm(dataset, desc='Cleaning text'):
+        s = re.sub(r'[^\u4e00-\u9fa5a-zA-Z0-9\s]', '', txt)
+        cleaned.append(s.strip())
+    return cleaned
+
+def tokenize_and_remove_stopwords(dataset):
+    """按字符保留中文、去停用符号"""
+    stop_file = os.path.join(DEFAULT_DATA_DIR, 'hit_stopwords.txt')
+    with open(stop_file, 'r', encoding='utf-8') as f:
+        stop = {w.strip() for w in f}
+    tokenized = []
+    for txt in tqdm(dataset, desc='Tokenizing'):
+        seq = ''.join([c for c in txt if c not in stop and '\u4e00' <= c <= '\u9fff'])
+        tokenized.append(seq)
+    return tokenized
 
 # 示例使用
 #coder = ChineseCharacterCoder()
