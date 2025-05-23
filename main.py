@@ -198,6 +198,7 @@ def evaluation(test_tags, predictions):
 if __name__ == "__main__":
     tag, text = read_data(os.path.join(DEFAULT_DATA_DIR, 'dataset.txt'))
 
+
     os.makedirs('res', exist_ok=True)
     HANZI_CACHE = os.path.join('res', 'hanzi.txt')
     SIMMAT_CACHE = os.path.join('res', 'similarity_matrix.pkl')
