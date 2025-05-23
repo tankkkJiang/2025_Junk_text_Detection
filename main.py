@@ -15,7 +15,6 @@ import os
 
 DEFAULT_DATA_DIR = 'data'    # ← 根据需要修改整个数据文件夹名称
 
-
 def read_data(filename):
     """
     读取原始语料，每行格式 “标签<TAB>文本”
