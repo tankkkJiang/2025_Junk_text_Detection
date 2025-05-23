@@ -11,6 +11,9 @@ import numpy as np
 from imblearn.over_sampling import RandomOverSampler
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import confusion_matrix, classification_report
+import os
+
+DEFAULT_DATA_DIR = 'data'    # ← 根据需要修改整个数据文件夹名称
 
 # 读取数据集
 def read_data(filename):
@@ -41,7 +44,7 @@ def clean_text(dataset):
 
 # 停用词处理和文本分割
 def tokenize_and_remove_stopwords(dataset):
-    stopwords_file = '数据集/hit_stopwords.txt'
+    stopwords_file = os.path.join(DEFAULT_DATA_DIR, 'hit_stopwords.txt')
     with open(stopwords_file, 'r', encoding='utf-8') as file:
         stopwords = {line.strip() for line in file}
 
@@ -141,9 +144,10 @@ def evaluation(test_tags, predictions):
     print(report)
 
 if __name__ == "__main__":
-    tag, text = read_data('数据集/dataset.txt')
+    tag, text = read_data(os.path.join(DEFAULT_DATA_DIR, 'dataset.txt'))
 
-    chinese_characters, chinese_characters_count, chinese_characters_code = count_chinese_characters(text, '数据集/hanzi.txt')
+    chinese_characters, chinese_characters_count, chinese_characters_code = \
+        count_chinese_characters(text, os.path.join(DEFAULT_DATA_DIR, 'hanzi.txt'))
     sim_mat = compute_sim_mat(chinese_characters, chinese_characters_code)
     
     #text_train, text_test, tag_train, tag_test = divide_dataset(tag, text)

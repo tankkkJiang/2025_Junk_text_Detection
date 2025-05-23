@@ -6,6 +6,21 @@
 
 ## 文件结构说明
 
+```bash
+2025_Junk_text_Detection/
+├─ data/                            # 存放所有外部数据文件
+│  ├─ chinese_unicode_table.txt     # 汉字 Unicode 编码与笔画等信息对照表
+│  ├─ dataset.txt                   # 带标签的垃圾／正常短信语料集（标签\t文本）
+│  ├─ hanzi.txt                     # 语料中出现的汉字及其拼音／笔画编码与出现次数
+│  ├─ hanzijiegou_2w.txt            # 汉字结构（部件）对照表，用于生成字形编码
+│  └─ hit_stopwords.txt             # 停用符号／标点列表，用于分词过滤
+├─ four_corner_method/              # 「四角号码」编码方法的实现，供 utils.py 调用
+├─ main.py                          # 主脚本：数据读取→清洗→分词→字嵌入→句向量→训练分类器
+├─ ssc_similarity.py                # 声形码相似度计算：字音/字形编码相似性函数
+├─ utils.py                         # 工具集：汉字编码、统计、相似矩阵构建与加载等
+└─ README.md                        # 项目说明与使用指南
+```
+
 ### 核心功能文件
 - `ssc_similarity.py`：负责计算汉字之间的字音和字形相似性。它会综合字音编码和字形编码的相似度，得出最终的相似性得分。
 - `utils.py`：包含一系列实用工具函数，像汉字编码生成、统计汉字出现次数、构建并加载相似性矩阵等操作都由其完成。

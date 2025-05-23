@@ -8,6 +8,8 @@ from ssc_similarity import *
 from tqdm import tqdm
 import pickle
 import numpy as np
+import os
+DEFAULT_DATA_DIR = 'data'    # ← 与 main.py 保持一致
 
 class ChineseCharacterCoder:
     def __init__(self):
@@ -20,8 +22,8 @@ class ChineseCharacterCoder:
                                 '41':'f', '42':'g', '43':'h', '44':'i', '45':'j', '46':'k', '47':'l', '48':'m', '49':'n', '50':'o',
                                 '51':'p'}
 
-        # 加载汉字结构对照文件
-        with open('数据集/hanzijiegou_2w.txt', 'r', encoding='utf-8') as file:
+        # 加载汉字结构对照文件、
+        with open(os.path.join(DEFAULT_DATA_DIR, 'hanzijiegou_2w.txt'), 'r', encoding='utf-8') as file:
             for line in file:
                 parts = line.strip().split('\t')
                 if len(parts) == 2:
@@ -30,7 +32,7 @@ class ChineseCharacterCoder:
 
         # 加载汉字笔画对照文件，参考同级目录下的 chinese_unicode_table.txt 文件格式
         self.chinese_char_map = {}
-        with open('数据集/chinese_unicode_table.txt', 'r', encoding='UTF-8') as f:
+        with open(os.path.join(DEFAULT_DATA_DIR, 'chinese_unicode_table.txt'), 'r', encoding='UTF-8') as f:
             lines = f.readlines()
             for line in lines[6:]:  # 前6行是表头，去掉
                 line_info = line.strip().split()
