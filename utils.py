@@ -182,7 +182,7 @@ def compute_sim_mat(chinese_characters, chinese_characters_code):
             sim_mat[j][i] = similarity
 
     # 将结果保存到pkl文件
-    output_file = '数据集/similarity_matrix.pkl'
+    output_file = 'res/similarity_matrix.pkl'
     with open(output_file, 'wb') as f:
         pickle.dump(sim_mat, f)
 
@@ -219,7 +219,7 @@ def update_sim_mat(new_characters, chinese_characters_code, sim_mat):
             sim_mat[j][i] = similarity
 
     # 将结果写入文件
-    output_file = '数据集/similarity_matrix.txt'
+    output_file = 'res/similarity_matrix.txt'
     with open(output_file, 'w', encoding='utf-8') as f:
         for row in sim_mat:
             f.write('\t'.join(map(str, row)) + '\n')
