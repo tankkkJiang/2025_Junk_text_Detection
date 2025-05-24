@@ -32,6 +32,7 @@ DEFAULT_DATA_DIR = 'data'
 
 
 # ========= 通用 I/O =========
+# 读取数据集
 def read_data(path):
     with open(path, encoding='utf‑8') as f:
         lines = [l.strip().split('\t', 1) for l in f if '\t' in l]
@@ -119,7 +120,7 @@ if __name__ == "__main__":
 
     # 2. 训练 / 测试拆分
     x_train, x_test, y_train, y_test = train_test_split(
-        texts_clean, tags, test_size=0.3,
+        texts_clean, tags, test_size=0.5,
         random_state=42, stratify=tags)
 
     # ---------- 方案 1 ----------

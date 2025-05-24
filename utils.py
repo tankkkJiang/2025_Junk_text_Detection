@@ -85,6 +85,7 @@ class ChineseCharacterCoder:
 
         return None
 
+    # 为给定的汉字生成一个基于其拼音的编码
     def generate_pronunciation_code(self, hanzi):
         initial, final, coda, tone = self.split_pinyin(hanzi)
 
@@ -116,6 +117,8 @@ class ChineseCharacterCoder:
 
         return pronunciation_code
 
+    # 为给定的汉字生成一个基于其字形的编码
+    # 这里使用四角编码和笔画数作为字形特征
     def generate_glyph_code(self, hanzi):
         # 获取汉字的结构
         structure_code = self.structure_dict[hanzi]
@@ -226,6 +229,7 @@ def update_sim_mat(new_characters, chinese_characters_code, sim_mat):
 #
 #     return sim_mat
 
+# 文本清洗
 def clean_text(dataset):
     """去除非中英文、数字和空白"""
     cleaned = []
@@ -234,6 +238,7 @@ def clean_text(dataset):
         cleaned.append(s.strip())
     return cleaned
 
+# 停用词处理和文本分割
 def tokenize_and_remove_stopwords(dataset):
     """按字符保留中文、去停用符号"""
     stop_file = os.path.join(DEFAULT_DATA_DIR, 'hit_stopwords.txt')
