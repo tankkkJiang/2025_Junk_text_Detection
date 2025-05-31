@@ -34,10 +34,24 @@ DEFAULT_DATA_DIR = 'data'
 # ========= 通用 I/O =========
 # 读取数据集
 def read_data(path):
-    with open(path, encoding='utf‑8') as f:
-        lines = [l.strip().split('\t', 1) for l in f if '\t' in l]
-    tag, text = zip(*lines)
-    return list(tag), list(text)
+    tag = []
+    text = []
+    with open(path, encoding='utf-8') as f:
+        for line in f:
+            line = line.strip()
+            if not line:
+                # 跳过空行
+                continue
+            parts = line.split('\t', 1)
+            if len(parts) != 2 or parts[1].strip() == "":
+                # 这行无法拆出“标签”和“正文”，跳过或输出警告
+                # 如果想看一下具体是哪些行有问题，可以打印一下：
+                print(f"Skipping invalid line: {repr(line)}")
+                continue
+            t, txt = parts
+            tag.append(t)
+            text.append(txt)
+    return tag, text
 
 
 def evaluate(name, y_true, y_pred, t0, t1):
