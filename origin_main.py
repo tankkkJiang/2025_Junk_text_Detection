@@ -37,7 +37,7 @@ os.makedirs(RES_DIR, exist_ok=True)
 MODE = 1
 
 # 如果 MODE == 1，脚本会使用 SINGLE_DATA 做划分
-SINGLE_DATA = 'dataset.txt'
+SINGLE_DATA = 'big_dataset.txt'
 
 # 如果 MODE == 2，脚本会用 TRAIN_DATA 做训练，用 TEST_DATA 做测试
 TRAIN_DATA = 'big_dataset.txt'
