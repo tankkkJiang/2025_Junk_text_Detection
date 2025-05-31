@@ -22,12 +22,16 @@ import time
 
 DEFAULT_DATA_DIR = 'data'    # ← 根据需要修改整个数据文件夹名称
 
-# ======== 默认参数（可一键切换）========================
-MODE = 1               # 1=单数据集(50/50)；2=交叉数据集
+# MODE = 1 表示“单数据集模式”：对 SINGLE_DATA 做 50/50 划分训练/测试
+# MODE = 2 表示“交叉数据集模式”：用 TRAIN_DATA 训练，用 TEST_DATA 测试
+MODE = 1
+
+# 如果 MODE == 1，脚本会使用 SINGLE_DATA 做划分
 SINGLE_DATA = 'big_dataset.txt'
-TRAIN_DATA  = 'big_dataset.txt'
-TEST_DATA   = 'dataset.txt'
-# ======================================================
+
+# 如果 MODE == 2，脚本会用 TRAIN_DATA 做训练，用 TEST_DATA 做测试
+TRAIN_DATA = 'big_dataset.txt'
+TEST_DATA = 'dataset.txt'
 
 
 def read_data(filename):
