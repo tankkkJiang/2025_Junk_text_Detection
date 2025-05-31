@@ -14,6 +14,7 @@ from typing import List, Tuple
 
 import numpy as np
 from tqdm import tqdm
+import time
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import confusion_matrix, classification_report
@@ -211,6 +212,7 @@ def evaluate(true_y, pred_y):
 
 # ---------------- 主程序 ----------------
 def main():
+    start_time = time.time()
     # --------------------------------------------------
     # 1) 数据加载
     # --------------------------------------------------
@@ -279,6 +281,14 @@ def main():
     pred = spam_classification(tags_train, sent_vec_train, sent_vec_test)
     evaluate(tags_test, pred)
     logging.info('🎉  任务完成！')
+
+    # 记录脚本结束时间并打印耗时
+    end_time = time.time()
+    elapsed = end_time - start_time
+    # 格式化为 时:分:秒
+    m, s = divmod(int(elapsed), 60)
+    h, m = divmod(m, 60)
+    logging.info('🔔 脚本总耗时：%d小时%02d分%02d秒', h, m, s)
 
 
 if __name__ == '__main__':
