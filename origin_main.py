@@ -163,10 +163,15 @@ def generate_sentence_vectors(texts, char_vectors, d=100):
     sentence_vectors = []
     # 默认零向量以防测试集中出现训练集中没有的字符
     default_vec = np.zeros(d)
+
     for text in tqdm(texts, desc='Generating sentence vectors'):
         alpha = np.zeros((len(text), len(text)))
         for i in range(len(text)):
             for j in range(len(text)):
+                if text[i] not in char_vectors:
+                    print(f"[Warning] 字符 `{text[i]}` 不在字典中，使用默认向量。")
+                if text[j] not in char_vectors:
+                    print(f"[Warning] 字符 `{text[j]}` 不在字典中，使用默认向量。")
                 vec_i = char_vectors.get(text[i], default_vec)
                 vec_j = char_vectors.get(text[j], default_vec)
                 alpha[i][j] = alpha[j][i] = np.dot(vec_i, vec_j) / np.sqrt(d)
@@ -181,6 +186,9 @@ def generate_sentence_vectors(texts, char_vectors, d=100):
         for i in range(len(text)):
             mi = np.zeros((d,))
             for j in range(len(text)):
+                if text[j] not in char_vectors:
+                    # 再次提醒：此字符也不在字典里
+                    print(f"[Warning] 字符 `{text[j]}` 不在字典中，使用默认向量。")
                 vec_j = char_vectors.get(text[j], default_vec)
                 mi += alpha_hat[i][j] * vec_j
             m += mi
