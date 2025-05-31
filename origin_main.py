@@ -133,23 +133,45 @@ def generate_char_vectors(chinese_characters, w2v_vectors, sim_mat, text, chines
     threshold               : 相似度阈值（>= 才加入聚合）
     返回                   : dict，字符->加权向量
     """
+
+    total_chars = len(chinese_characters)
     char_vectors = {}
-    for i in tqdm(range(len(chinese_characters)), desc='Generating char vectors'):
+
+    print(f"[Info] 开始生成 {total_chars} 个字符的加权向量...")
+    for i in range(total_chars):
         character = chinese_characters[i]
+
+        # 每 500 个字符打印一次进度和当前字符
+        if i % 500 == 0:
+            print(f"[Progress] {i}/{total_chars} - 当前处理字符: `{character}`")
+
         similar_group = []
-        for j in range(len(sim_mat[i])):
+        for j in range(total_chars):
             if sim_mat[i][j] >= threshold:
                 similar_group.append(chinese_characters[j])
+
+        # 初始化一个全零向量
+        emb = np.zeros_like(w2v_vectors[list(w2v_vectors.keys())[0]])
         sum_count = 0
-        emb = np.zeros_like(w2v_vectors[list(w2v_vectors.keys())[0]])  # 初始化一个全零向量
+
         for c in similar_group:
-            if c not in w2v_vectors.keys():
+            if c not in w2v_vectors:
+                # 如果某个相似字符不在初始向量中，使用 update 动态加入并打印信息
+                print(f"[Update] 字符 `{c}` 不在初始向量中，调用 update() 重新训练获取向量。")
                 update(w2v_vectors, text, c)
+
             emb += chinese_characters_count[c] * w2v_vectors[c]
             sum_count += chinese_characters_count[c]
-        emb /= sum_count if sum_count else 1  # 避免除以0
+
+        # 避免除以 0
+        if sum_count == 0:
+            emb /= 1
+        else:
+            emb /= sum_count
+
         char_vectors[character] = emb
 
+    print(f"[Info] 所有字符加权向量生成完毕，共生成 {len(char_vectors)} 个向量。")
     return char_vectors
 
 def generate_sentence_vectors(texts, char_vectors, d=100):
