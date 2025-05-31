@@ -115,7 +115,7 @@ def w2v_avg_lr(x_tr_tokens, y_tr, x_te_tokens,
 # ======================== MAIN =========================
 if __name__ == "__main__":
     # 1. 读取 & 预处理
-    tags, texts = read_data(os.path.join(DEFAULT_DATA_DIR, 'dataset.txt'))
+    tags, texts = read_data(os.path.join(DEFAULT_DATA_DIR, 'big_dataset.txt'))
     texts_clean = tokenize_and_remove_stopwords(texts)
 
     # 2. 训练 / 测试拆分
