@@ -82,8 +82,24 @@ pip install -r requirements.txt
 ### 4.2 提出新模型
 
 ## 5. 过程记录
-### 5.1 源代码：原始数据集 dataset.txt mode1: 55划分
 ```bash
+# MODE = 1 表示“单数据集模式”：对 SINGLE_DATA 做 50/50 划分训练/测试
+# MODE = 2 表示“交叉数据集模式”：用 TRAIN_DATA 训练，用 TEST_DATA 测试
+MODE = 1
+
+# 如果 MODE == 1，脚本会使用 SINGLE_DATA 做划分
+SINGLE_DATA = 'big_dataset.txt'
+
+# 如果 MODE == 2，脚本会用 TRAIN_DATA 做训练，用 TEST_DATA 做测试
+TRAIN_DATA = 'big_dataset.txt'
+TEST_DATA = 'dataset.txt'
+```
+### 5.1 源代码：原始数据集 `dataset.txt` mode1: 55划分
+```bash
+[10:22:58] [INFO] 读取数据: data/dataset.txt
+[10:22:58] [INFO] ✔︎ 共读取 16007 行样本
+[10:22:58] [INFO] 训练样本=8003，测试样本=8004
+
 混淆矩阵：
 [[2014  486]
  [ 211 5293]]
@@ -101,5 +117,54 @@ weighted avg      0.913     0.913     0.911      8004
 [10:28:08] [INFO] 🎉  任务完成！
 [10:28:08] [INFO] 🔔 脚本总耗时：0小时05分09秒
 ```
+
 ![](media/2025-06-01-10-25-16.png)
 ![](media/2025-06-01-10-29-31.png)
+
+### 5.2 源代码：原始数据集 `big_dataset.txt` mode1: 55划分
+```bash
+[10:30:51] [INFO] 读取数据: data/big_dataset.txt
+[10:30:53] [INFO] ✔︎ 共读取 799998 行样本
+[10:30:53] [INFO] 训练样本=399999，测试样本=399999
+
+[10:31:30] [INFO] ✔︎ 加权字向量生成完成，大小=4700
+Generating sentence vectors: 100%|█████| 399999/399999 [11:09<00:00, 597.66it/s]
+Generating sentence vectors: 100%|█████| 399999/399999 [11:07<00:00, 599.45it/s]
+[10:53:50] [INFO] 
+混淆矩阵：
+[[356075   3924]
+ [ 10607  29393]]
+[10:53:51] [INFO] 
+分类报告：
+              precision    recall  f1-score   support
+
+           0      0.971     0.989     0.980    359999
+           1      0.882     0.735     0.802     40000
+
+    accuracy                          0.964    399999
+   macro avg      0.927     0.862     0.891    399999
+weighted avg      0.962     0.964     0.962    399999
+
+[10:53:51] [INFO] 🎉  任务完成！
+[10:53:51] [INFO] 🔔 脚本总耗时：0小时23分00秒
+```
+
+![](media/2025-06-01-10-35-12.png)
+![](media/2025-06-01-10-54-07.png)
+
+### 5.3 源代码：mode2: `big_dataset.txt`训练，`dataset.txt`测试
+```bash
+```
+
+### 5.4 新模型：原始数据集 `dataset.txt` mode1: 55划分
+```bash
+```
+
+### 5.5 新模型：原始数据集 `big_dataset.txt` mode1: 55划分
+```bash
+```
+
+
+### 5.6 新模型：mode2: `big_dataset.txt`训练，`dataset.txt`测试
+```bash
+```
