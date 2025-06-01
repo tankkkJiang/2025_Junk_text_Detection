@@ -134,6 +134,23 @@ X_all = tokenize_and_remove_stopwords(X_raw)  # 例如 ['今天天气很好我�
 
 ## 4. 方法
 
+**代码结构**
+```plaintext
+实验报告文档/
+├── Report.pdf                       # 实验报告
+├── main.py                          # 主脚本：数据读取→清洗→分词→字嵌入→句向量→训练分类器
+├── multi_main.py                    # 多方案快速对比脚本
+├── origin_main.py                   # 原始主脚本
+├── plot_results.py                  # 可视化垃圾文本检测模型的验证结果
+├── plot_results_compare.py          # 对比不同模型的可视化脚本
+├── README.md                        # 项目说明与使用指南
+├── requirements.txt                 # 依赖库列表
+├── ssc_similarity.py                # 声形码相似度计算：字音/字形编码相似性函数
+├── test_model.py                    # 验证垃圾文本检测模型
+├── utils.py                         # 工具集：汉字编码、统计、相似矩阵构建与加载等
+└── vote_main.py                     # 多模型训练 + 保存 + 多数投票脚本
+```
+
 本实验包含两大核心部分：
 
 1. **句向量构造**（基于声形相似度 + Word2Vec 平均池化）
