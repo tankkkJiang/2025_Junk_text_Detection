@@ -150,72 +150,23 @@ X_all = tokenize_and_remove_stopwords(X_raw)  # 例如 ['今天天气很好我�
 
 ### 4.2 Word2Vec 字向量训练 & 句向量构造
 
-在 `multi_main.py` 中，Word2Vec 的训练与句向量构造集中体现在 `w2v_avg_lr` 函数里：
-
-```python
-from gensim.models import Word2Vec
-from sklearn.linear_model import LogisticRegression
-import numpy as np
-
-def w2v_avg_lr(xtr_tok, ytr, xte_tok, *, dim=100, window=5, sg=1, seed=42):
-    # 1. 将每条训练/测试文本拆成“汉字列表”
-    sents_tr = [list(s) for s in xtr_tok]
-    sents_te = [list(s) for s in xte_tok]
-
-    # 2. 在训练集字符序列上训练 Word2Vec
-    w2v = Word2Vec(
-        sentences=sents_tr,
-        vector_size=dim,
-        window=window,
-        min_count=1,
-        sg=sg,
-        seed=seed
-    )
-
-    # 3. 定义一个辅助函数，将任意汉字序列平均池化为句向量
-    def sent_vec(chars):
-        vecs = [w2v.wv[c] for c in chars if c in w2v.wv]
-        return np.mean(vecs, axis=0) if vecs else np.zeros(dim)
-
-    # 4. 对训练集和测试集分别计算句向量
-    Xtr = np.vstack([sent_vec(s) for s in sents_tr])
-    Xte = np.vstack([sent_vec(s) for s in sents_te])
-
-    # 5. 使用 LogisticRegression 训练并预测
-    clf = LogisticRegression(max_iter=1000, random_state=seed)
-    clf.fit(Xtr, ytr)
-    y_pred = clf.predict(Xte)
-
-    # 由于 LogisticRegression 支持 predict_proba，可输出概率
-    proba_raw = clf.predict_proba(Xte)
-    # 对齐概率列（假设已有全局变量 n_classes, class_to_idx）
-    proba_aligned = np.zeros((Xte.shape[0], n_classes))
-    for raw_col, lab in enumerate(clf.classes_):
-        proba_aligned[:, class_to_idx[lab]] = proba_raw[:, raw_col]
-
-    y_proba = proba_aligned
-    return y_pred, y_proba, w2v, clf
-```
+在 `multi_main.py` 中，`Word2Vec` 的训练与句向量构造集中体现在 `w2v_avg_lr` 函数里. `Word2Vec` 是一种用于生成词向量的模型，它通过训练文本数据，将每个词映射到一个低维向量空间中。而句向量则是通过某种方式将句子中的词向量组合起来，得到一个能够表示整个句子的向量.  
+`Word2Vec` 模型是一种基于神经网络的词嵌入模型。`Word2Vec` 有两种架构：`CBOW（Continuous Bag of Words）`和 `Skip-Gram`. `CBOW` 的目标是根据上下文词来预测目标词，而 `Skip-Gram` 则是根据目标词来预测上下文词。在代码中虽然没有明确指出使用的是哪种架构，但通常情况下，对于中文文本，`Skip-Gram` 更为常用，因为它能够更好地捕捉到上下文中稀有词的信息.  
 
 **流程说明**：
 
-1. **训练 Word2Vec**
+**训练 Word2Vec**
 
-   * 输入：`sents_tr`（训练集每条文本已拆成汉字列表）
-   * 参数：`vector_size=dim`（如 100）、`window=5`、`sg=1`（Skip-gram）等
-   * 输出：`w2v.wv` 可以通过 `w2v.wv[char]` 获取任意汉字的 `dim` 维向量。
+1. 输入数据是训练集中的文本数据，这些文本数据被分成了一个个的句子。在代码中，句子是由字符组成的序列，这是因为中文是以字符为基本单位的.  
+2. Word2Vec 通过在文本中滑动一个固定大小的窗口来构建训练样本。对于每个目标字，它会将窗口内的其他字作为上下文字。例如，窗口大小为 5，目标字为"中"，那么上下文字可能包括"我""是""一""个"等.  
+3. 模型会根据上下文字来预测目标字（如果是 Skip-Gram 架构）或者根据目标字来预测上下文字（如果是 CBOW 架构）。模型通过调整字向量的值来最小化预测错误.  
+4. 在训练过程中，模型会不断更新字向量，使得相似的字在向量空间中距离更近. 训练完成后，每个字都会有一个对应的向量表示，这些向量可以用于后续的文本处理任务.  
 
-2. **构造句向量**
+**构造句向量**
 
-   * 对于每条字符序列 `chars`，调用 `sent_vec(chars)`：
-
-     * 取该序列中每个字符在 `w2v.wv` 中的向量，若某个字符不在词典则跳过；
-     * 取这些向量的平均值，即得到一句话的定长向量。
-
-3. **分类**
-
-   * 以 `Xtr`（形状 `(n_tr, dim)`）和 `ytr` 训练一个 `LogisticRegression` 分类器；
-   * 用训练好的模型对 `Xte` 进行预测，得到 `y_pred` 与概率 `y_proba`。
+1. 字符序列化: 在构造句向量之前，首先需要将句子中的文本转换为字符序列。这是因为 Word2Vec 模型训练得到的是字向量，而句子是由字组成的，所以需要将句子分解为一个个的字.  
+2. 查找字向量: 对于句子中的每个字，查找其在 Word2Vec 模型中对应的字向量。如果某个字在训练数据中没有出现过，那么它可能没有对应的字向量。在这种情况下，可以使用零向量或者其他默认向量来代替.  
+3. 平均池化: 将句子中所有字的字向量进行平均池化操作，即将这些字向量相加后除以字向量的个数。这样得到的结果就是一个固定长度的向量，即句向量. 平均池化操作的原理是基于假设句子的语义可以由其组成字的语义来近似表示。通过将字向量进行平均，可以得到一个能够代表整个句子语义的向量, 如句子“我喜欢吃苹果”和“我喜欢吃香蕉”在经过平均池化后得到的句向量会比较接近. 
 
 > **注意**：若训练集中出现新的字符（不在初始 `w2v.wv` 中），会被跳过，这时可适当先重训或保证 `min_count=1` 保留所有字符。
 
@@ -229,230 +180,139 @@ def w2v_avg_lr(xtr_tok, ytr, xte_tok, *, dim=100, window=5, sg=1, seed=42):
 def 模型名称(xtr, ytr, xte, **超参) -> (y_pred, y_proba_or_None, embedder_or_None, clf)
 ```
 
-列出主要几种模型及其关键代码片段（简化版本）。
-
----
+下面列出主要几种模型及其原理和实现细节。
 
 ### 5.1 TF-IDF(char1-3) + LinearSVC
 
-```python
-from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.svm import LinearSVC
+**TF-IDF**
 
-def tfidf_svc(xtr, ytr, xte, *, ngram=(1,3), min_df=2, C=1.0, seed=42):
-    # 1. 基于字符 ngram 训练 TF-IDF
-    vec = TfidfVectorizer(analyzer='char', ngram_range=ngram, min_df=min_df)
-    Xtr = vec.fit_transform(xtr)
-    Xte = vec.transform(xte)
+- **算法原理**: TF-IDF (Term Frequency-Inverse Document Frequency) 是一种统计方法，用于评估一个词对于一个文档集或语料库中的其中一份文档的重要程度。
+  - **Term Frequency (TF)**: 计算某个字符n-gram在当前文档中出现的频率
+  - **Inverse Document Frequency (IDF)**: 衡量该n-gram在整个语料库中的稀有程度
+  - 最终TF-IDF值是TF和IDF的乘积
+- **实现细节**:  
+  - `analyzer='char'`表示按字符而不是词语进行分析
+  - `ngram_range=(1,3)`表示提取1-gram到3-gram的特征, 在后续的模型名称中以`n13`表示
+  - `min_df=2`表示忽略那些文档频率小于2的n-gram, 在后续的模型名称中以`df2`表示
 
-    # 2. 用 LinearSVC 训练并预测
-    clf = LinearSVC(C=C, random_state=seed)
-    clf.fit(Xtr, ytr)
-    y_pred = clf.predict(Xte)
+**LinearSVC**
 
-    # LinearSVC 不支持 predict_proba
-    return y_pred, None, vec, clf
-```
+- **算法原理**:  Linear Support Vector Classification (线性支持向量分类)是一种基于最大间隔分类的线性模型. 在后续的模型名称中以`svc`标识.  
+  - 寻找一个超平面，使得不同类别的样本之间的间隔(margin)最大化
+  - 使用hinge loss作为损失函数
+  - 支持向量是那些距离超平面最近的样本点
+- **实现细节**:  
+  - `C=1.0`是正则化参数，控制模型的复杂度, 在后续的模型名称中以`c1`表示
+  - `random_state=42`确保结果可复现, 在后续的模型名称中以`s42`表示
+  - 不支持概率输出，因此`y_proba=None`
 
-* 输出：
+* **输出**：
 
   * `y_pred`：测试集预测标签
   * `y_proba=None`（没有概率输出）
   * `vec`：训练好的 `TfidfVectorizer`
   * `clf`：训练好的 `LinearSVC`
 
----
-
 ### 5.2 TF-IDF(char1-3) + LogisticRegression
 
-```python
-from sklearn.linear_model import LogisticRegression
+**TF-IDF**
 
-def tfidf_lr(xtr, ytr, xte, *, ngram=(1,3), min_df=2, C=1.0, seed=42):
-    vec = TfidfVectorizer(analyzer='char', ngram_range=ngram, min_df=min_df)
-    Xtr = vec.fit_transform(xtr)
-    Xte = vec.transform(xte)
+- 同上一个模型中的TF-IDF实现
 
-    clf = LogisticRegression(max_iter=1000, C=C, random_state=seed)
-    clf.fit(Xtr, ytr)
-    y_pred = clf.predict(Xte)
+**LogisticRegression**
 
-    # 对齐概率列
-    proba_raw = clf.predict_proba(Xte)  # 形状 = (n_samples, n_clf_classes)
-    n_samples = Xte.shape[0]
-    proba_aligned = np.zeros((n_samples, n_classes))
-    for raw_col, lab in enumerate(clf.classes_):
-        proba_aligned[:, class_to_idx[lab]] = proba_raw[:, raw_col]
-    y_proba = proba_aligned
-
-    return y_pred, y_proba, vec, clf
-```
+- **算法原理**: 逻辑回归是一种概率分类模型, 在后续的模型名称中以`lr`标识.  
+  - 使用sigmoid函数将线性回归的输出映射到(0,1)区间
+  - 通过最大似然估计来优化参数
+  - 可以输出每个类别的概率
+- **实现细节**: 
+  - `max_iter=1000`设置最大迭代次数
+  - `C=2.0`是正则化强度的倒数
+  - 通过`predict_proba`方法可以获取类别概率
+  - 代码中对概率进行了对齐处理，确保与全局类别顺序一致
 
 * 与 `tfidf_svc` 唯一区别在于：`LogisticRegression` 支持 `predict_proba`，可输出概率矩阵 `y_proba`。
 
----
-
 ### 5.3 HashingVectorizer(char1-3) + SGDClassifier
 
-```python
-from sklearn.feature_extraction.text import HashingVectorizer
-from sklearn.linear_model import SGDClassifier
+**HashingVectorizer**
 
-def hashing_sgd(xtr, ytr, xte, *, n_features=2**20, alpha=1e-4, seed=42, use_log_loss=False):
-    vec = HashingVectorizer(analyzer='char', ngram_range=(1,3),
-                            n_features=n_features, alternate_sign=False)
-    Xtr = vec.transform(xtr)
-    Xte = vec.transform(xte)
+- **算法原理**: 使用特征哈希(hashing trick)将文本转换为特征向量, 在后续的
+  - 通过哈希函数直接将字符n-gram映射到固定维度的特征空间
+  - 避免存储词汇表，节省内存
+  - 可能发生哈希冲突但通常影响不大
+- **实现细节**: 
+  - `n_features=2^20`设置哈希空间大小
+  - `alternate_sign=False`不使用交替符号
 
-    loss = 'log_loss' if use_log_loss else 'hinge'
-    clf = SGDClassifier(loss=loss, alpha=alpha, random_state=seed)
-    clf.fit(Xtr, ytr)
-    y_pred = clf.predict(Xte)
-    y_proba = clf.predict_proba(Xte) if loss == 'log_loss' else None
+**SGDClassifier**
 
-    return y_pred, y_proba, vec, clf
-```
+- **算法原理**: `SGDClassifier`是一种基于随机梯度下降（SGD）的分类器，它可以用于多种线性分类任务, 在后续的模型名称中以`sgd`标识.  
+  - 每次迭代使用一个样本或小批量样本来更新模型参数
+  - 可以用于不同的损失函数(hinge loss/log loss)
+  - 适合大规模数据集
+- **实现细节**: 
+  - `alpha=1e-4`是正则化参数
+  - `loss='log_loss'`时可以作为逻辑回归使用
+  - `random_state=42`确保可复现性
 
 * 若 `use_log_loss=True` 即用对数损失，可输出概率；否则只输出 `y_pred`。
 
----
-
 ### 5.4 TF-IDF(char1-5) + MultinomialNB
 
-```python
-from sklearn.naive_bayes import MultinomialNB
+**TF-IDF**
 
-def tfidf_nb(xtr, ytr, xte, *, ngram=(1,5), min_df=1):
-    vec = TfidfVectorizer(analyzer='char', ngram_range=ngram, min_df=min_df)
-    Xtr = vec.fit_transform(xtr)
-    Xte = vec.transform(xte)
+- 同上TF-IDF实现，但使用更大的n-gram范围(1,5)
+  
+**MultinomialNB**
 
-    clf = MultinomialNB()
-    clf.fit(Xtr, ytr)
-    y_pred = clf.predict(Xte)
-
-    proba_raw = clf.predict_proba(Xte)
-    proba_aligned = np.zeros((Xte.shape[0], n_classes))
-    for raw_col, lab in enumerate(clf.classes_):
-        proba_aligned[:, class_to_idx[lab]] = proba_raw[:, raw_col]
-    y_proba = proba_aligned
-
-    return y_pred, y_proba, vec, clf
-```
-
----
+- **算法原理**: 多项式朴素贝叶斯是基于贝叶斯定理的分类器
+  - 假设特征之间条件独立
+  - 适用于离散特征(如词频)
+  - 计算每个类别的后验概率
+- **实现细节**: 
+  - 使用训练集的特征矩阵 `Xtr` 和标签 `ytr` 对分类器进行训练
+  - 使用训练好的分类器对测试集的特征矩阵 `Xte` 进行预测，得到预测结果`y_pred`
+  - 输出每个样本属于每个类别的概率，得到原始概率矩阵`proba_raw`
+  - 由于多项式朴素贝叶斯分类器的输出类别顺序可能与全局类别顺序不一致，因此需要对概率矩阵进行对齐。`proba_aligned` 是对齐后的概率矩阵，其形状为`(n_samples, n_classes)`
 
 ### 5.5 Word2Vec 平均池化 + LogisticRegression
 
-（即前面介绍的 `w2v_avg_lr`）
-
----
+`Word2Vec`模型和`LogisticRegression`算法原理已于上文进行阐述. 模型名称中以`w2v`标识`Word2Vec`模型, `d100`表示模型的维度参数`dim=100`.  
 
 ### 5.6 主流程：模型训练与评估
-首先读取并预处理文本数据，将标签和原始文本分成训练集和测试集，然后定义了一个包含多种基于 TF-IDF、Hashing、Word2Vec 等特征提取与分类方法的模型列表，依次对每个模型进行训练、预测、效果评估并保存模型文件；接着通过对各模型预测结果进行多数投票和加权软投票两种简单融合方式获得最终预测，并评估融合效果；最后使用剩余概率输出模型的 OOF 特征与测试集特征构建 Stacking 元学习器（LogisticRegression），在训练集上做 5 折 CV 生成元特征，并在测试集上预测并评估最终 Stacking 融合结果。
 
-```python
-if __name__ == "__main__":
-    # 1. 数据读取与预处理
-    y_all, X_raw = read_data(os.path.join(DEFAULT_DATA_DIR, 'dataset.txt'))
-    class_order = sorted(set(y_all))  # ['0','1']
-    n_classes = len(class_order)
-    class_to_idx = {c: i for i, c in enumerate(class_order)}
-    idx_to_class = {i: c for c, i in class_to_idx.items()}
-    X_all = tokenize_and_remove_stopwords(X_raw)
+主函数首先读取并预处理文本数据，将标签和原始文本分成训练集和测试集，然后定义了⼀个包含多种基于`TF-IDF、Hashing、Word2Vec `等特征提取与分类方法的模型列表，依次对每个模型进⾏训练、预测、效果评估并保存模型文件. 主函数实现了两种模型融合策略, 其原理和实现细节如下:  
 
-    # 2. 划分训练集/测试集（50%:50%）
-    x_tr, x_te, y_tr, y_te = train_test_split(
-        X_all, y_all,
-        test_size=0.5,
-        random_state=42,
-        stratify=y_all
-    )
+**1. Majority Voting（多数投票）**
 
-    # 3. 定义要训练的模型列表：[(函数, 参数字典, 名称), ...]
-    model_grid = [
-        (tfidf_svc , {'ngram':(1,3), 'C':1.0, 'seed':42},     'svc_n13_c1'),
-        (tfidf_lr  , {'ngram':(1,3), 'C':2.0, 'seed':7},      'lr_n13_c2'),
-        (hashing_sgd, {'n_features':2**19, 'alpha':1e-4, 'seed':99}, 'sgd_f19'),
-        (tfidf_nb  , {'ngram':(1,5), 'min_df':1},             'nb_n15'),
-        (w2v_avg_lr, {'dim':100, 'seed':1},                   'w2v_d100'),
-        (w2v_avg_lr, {'dim':200, 'seed':2},                   'w2v_d200'),
-    ]
+**原理**
+- 每个基模型对样本独立投票，选择得票数最多的类别作为最终预测
+- 适用于硬标签（即模型的 predict 输出，非概率）
 
-    all_preds, model_names = [], []
-    proba_list, proba_wt = [], []
-    weights = [1.0, 1.0, 0.8, 1.2, 1.0, 1.0]
+**代码实现**
+1. 收集预测结果：所有模型的预测结果存储在 all_preds 列表中（形状`(n_models, n_samples)`）
+2. 投票过程: 
+   - 对每个样本，统计所有模型的预测标签
+   - 使用`Counter(col).most_common(1)[0][0]`选择最高频的标签
+   - 通过`np.apply_along_axis`沿样本维度应用投票函数
+3. 比较投票结果`y_vote`与真实标签`y_te`
 
-    # 4. 单模型训练 + 保存 + 评估
-    for (train_fn, params, name), wt in zip(model_grid, weights):
-        print(f'\n>>> 训练模型 {name}')
-        t0 = time.time()
-        y_pred, y_proba, embedder, clf = train_fn(x_tr, y_tr, x_te, **params)
+**2. Soft Voting(软投票/加权平均概率)**
 
-        # 保存向量化器/Word2Vec模型 + 分类器
-        joblib.dump((embedder, clf), SAVE_DIR / f'{name}.pkl')
+**原理**
+- 对支持概率输出的模型，加权平均它们的预测概率，选择概率最高的类别。
+- 权重可自定义（如代码中的`weights = [1.0, 1.0, 0.8, 0.8, 1.2, 1.0, 1.0]`）
 
-        # 输出该模型在测试集上的评估结果
-        evaluate(name, y_te, y_pred, t0, time.time())
+**代码实现**
 
-        all_preds.append(y_pred)
-        model_names.append(name)
-        if y_proba is not None:
-            proba_list.append(y_proba)
-            proba_wt.append(wt)
-
-    # 5. 融合策略
-    # 5.1 多数投票（硬投票）
-    all_preds_arr = np.array(all_preds)  # (n_models, n_samples)
-    y_vote = np.apply_along_axis(
-        lambda col: Counter(col).most_common(1)[0][0],
-        axis=0,
-        arr=all_preds_arr
-    )
-    evaluate(f'Majority Voting', y_te, y_vote, 0, 0)
-
-    # 5.2 加权软投票（概率加权平均）
-    if proba_list:
-        prob_mat = np.stack(proba_list, axis=0)         # (n_prob_models, n_samples, n_classes)
-        wt_arr = np.array(proba_wt).reshape(-1, 1, 1)   # 权重对齐形状
-        proba_avg = (prob_mat * wt_arr).sum(axis=0) / wt_arr.sum(axis=0)
-        y_soft_idx = proba_avg.argmax(axis=1)
-        y_soft = [idx_to_class[i] for i in y_soft_idx]
-        evaluate('Soft Voting (weighted)', y_te, y_soft, 0, 0)
-
-    # 5.3 Stacking 融合
-    prob_models = [
-        (fn, params, name)
-        for fn, params, name in model_grid
-        if fn is not tfidf_svc and fn is not hashing_sgd
-    ]
-    n_meta = len(prob_models)
-    n_tr = len(x_tr)
-    n_te = len(x_te)
-    meta_oof = np.zeros((n_tr, n_meta, n_classes))
-    meta_test = np.zeros((n_te, n_meta, n_classes))
-    skf = StratifiedKFold(n_splits=5, shuffle=True, random_state=42)
-
-    for j, (train_fn, params, name) in enumerate(prob_models):
-        for tr_idx, val_idx in skf.split(x_tr, y_tr):
-            _, y_proba_val, _, _ = train_fn(
-                [x_tr[i] for i in tr_idx],
-                [y_tr[i] for i in tr_idx],
-                [x_tr[i] for i in val_idx],
-                **params
-            )
-            meta_oof[val_idx, j] = y_proba_val
-
-        _, y_proba_te, _, _ = train_fn(x_tr, y_tr, x_te, **params)
-        meta_test[:, j, :] = y_proba_te
-
-    meta_oof_feat = meta_oof[:, :, 1]    # 取正类概率
-    meta_test_feat = meta_test[:, :, 1]
-    meta_clf = LogisticRegression(max_iter=1000, random_state=0)
-    meta_clf.fit(meta_oof_feat, y_tr)
-    y_stack = meta_clf.predict(meta_test_feat)
-    evaluate('Stacking (LogReg meta)', y_te, y_stack, 0, 0)
-```
+1. 收集概率输出：从`proba_list`中获取各模型的概率矩阵（形状 `(n_samples, n_classes)`）
+2. 加权平均:  
+   - 将概率矩阵堆叠为`prob_mat`（形状 `(n_prob_models, n_samples, n_classes)`）
+   - 使用权重数组`wt_arr`对概率加权求和，再归一化
+3. 决策:  
+   - 取加权平均概率`proba_avg`的最大值索引`argmax(axis=1)`
+   - 通过`idx_to_class`映射回原始标签
 
 ---
 
@@ -493,7 +353,8 @@ TEST_DATA = 'dataset.txt'
 
 1. **单模型性能对比**
    下面为各种单模型的运行截图和结果展示。
-![原结果](media/1.jpg "原结果")
+<img width=550 height=300 src="media/1_1.jpg">  
+<img width=550 height=300 src="media/1_2.jpg"> 
 
 <div style="text-align: center;">
   <img src="media/2025-06-01-14-21-19.png" style="width:300px; display: inline-block;">
@@ -503,59 +364,9 @@ TEST_DATA = 'dataset.txt'
 ![](media/2025-06-01-14-21-47.png)
 2. **融合策略效果**
 
-   * **多数投票（硬投票）**：准确率 ，Macro-F1
-   * **加权软投票（概率加权平均）**：，Macro-F1
-   * **Stacking（LogisticRegression 作为 Meta-classifier）**：准确率 ，Macro-F1
+![](media/性能表格.png)  
 
-
-| 模型名称                   |            类别／指标 | Precision | Recall | F1-score | Support |
-| ---------------------- | ---------------: | --------: | -----: | -------: | ------: |
-| **lr\_n13\_c2\_s7**    |                0 |     0.996 |  0.985 |    0.990 |    5000 |
-|                        |                1 |     0.993 |  0.998 |    0.996 |   11007 |
-|                        |     **accuracy** |         — |      — |    0.994 |   16007 |
-|                        |    **macro avg** |     0.994 |  0.991 |    0.993 |   16007 |
-|                        | **weighted avg** |     0.994 |  0.994 |    0.994 |   16007 |
-| **svc\_n13\_c1\_s42**  |                0 |     0.995 |  0.993 |    0.994 |    5000 |
-|                        |                1 |     0.997 |  0.998 |    0.997 |   11007 |
-|                        |     **accuracy** |         — |      — |    0.996 |   16007 |
-|                        |    **macro avg** |     0.996 |  0.995 |    0.995 |   16007 |
-|                        | **weighted avg** |     0.996 |  0.996 |    0.996 |   16007 |
-| **nb\_n15\_df1**       |                0 |     0.994 |  0.986 |    0.990 |    5000 |
-|                        |                1 |     0.994 |  0.997 |    0.995 |   11007 |
-|                        |     **accuracy** |         — |      — |    0.994 |   16007 |
-|                        |    **macro avg** |     0.994 |  0.992 |    0.993 |   16007 |
-|                        | **weighted avg** |     0.994 |  0.994 |    0.994 |   16007 |
-| **svc\_n14\_c05\_s13** |                0 |     0.994 |  0.993 |    0.994 |    5000 |
-|                        |                1 |     0.997 |  0.997 |    0.997 |   11007 |
-|                        |     **accuracy** |         — |      — |    0.996 |   16007 |
-|                        |    **macro avg** |     0.996 |  0.995 |    0.995 |   16007 |
-|                        | **weighted avg** |     0.996 |  0.996 |    0.996 |   16007 |
-| **w2v\_d200\_s2**      |                0 |     0.953 |  0.981 |    0.967 |    5000 |
-|                        |                1 |     0.991 |  0.978 |    0.985 |   11007 |
-|                        |     **accuracy** |         — |      — |    0.979 |   16007 |
-|                        |    **macro avg** |     0.972 |  0.979 |    0.976 |   16007 |
-|                        | **weighted avg** |     0.979 |  0.979 |    0.979 |   16007 |
-| **w2v\_d100\_s1**      |                0 |     0.955 |  0.981 |    0.968 |    5000 |
-|                        |                1 |     0.991 |  0.979 |    0.985 |   11007 |
-|                        |     **accuracy** |         — |      — |    0.980 |   16007 |
-|                        |    **macro avg** |     0.973 |  0.980 |    0.976 |   16007 |
-|                        | **weighted avg** |     0.980 |  0.980 |    0.980 |   16007 |
-| **sgd\_f19\_s99**      |                0 |     0.998 |  0.988 |    0.993 |    5000 |
-|                        |                1 |     0.995 |  0.999 |    0.997 |   11007 |
-|                        |     **accuracy** |         — |      — |    0.996 |   16007 |
-|                        |    **macro avg** |     0.996 |  0.994 |    0.995 |   16007 |
-|                        | **weighted avg** |     0.996 |  0.996 |    0.996 |   16007 |
-| **Majority Voting**    |                0 |     0.989 |  0.985 |    0.987 |    2500 |
-|                        |                1 |     0.993 |  0.995 |    0.994 |    5504 |
-|                        |     **accuracy** |         — |      — |    0.992 |    8004 |
-|                        |    **macro avg** |     0.991 |  0.990 |    0.991 |    8004 |
-|                        | **weighted avg** |     0.992 |  0.992 |    0.992 |    8004 |
-| **Soft Voting**        |                0 |     0.971 |  0.984 |    0.978 |    2500 |
-|                        |                1 |     0.993 |  0.987 |    0.990 |    5504 |
-|                        |     **accuracy** |         — |      — |    0.986 |    8004 |
-|                        |    **macro avg** |     0.982 |  0.985 |    0.984 |    8004 |
-|                        | **weighted avg** |     0.986 |  0.986 |    0.986 |    8004 |
-
+> 注: 表格中标注为红色的数值表示该数值对应的模型在类别1的对应指标中效果最好, 加粗的数值表示该数值对应的模型在类别0的对应指标中效果最好.  
 
 #### 7.2.2 可视化结果
 
@@ -770,42 +581,4 @@ if proba_list:
     y_soft_idx = proba_avg.argmax(axis=1)
     y_soft = [idx_to_class[i] for i in y_soft_idx]
     evaluate('Soft Voting (weighted)', y_te, y_soft, 0, 0)
-```
-
-#### Stacking 融合示例
-
-```python
-prob_models = [
-    (fn, params, name)
-    for fn, params, name in model_grid
-    if fn is not tfidf_svc and fn is not hashing_sgd
-]
-n_meta = len(prob_models)
-n_tr = len(x_tr)
-n_te = len(x_te)
-
-meta_oof = np.zeros((n_tr,  n_meta, n_classes))
-meta_test = np.zeros((n_te,  n_meta, n_classes))
-skf = StratifiedKFold(n_splits=5, shuffle=True, random_state=42)
-
-for j, (train_fn, params, name) in enumerate(prob_models):
-    for tr_idx, val_idx in skf.split(x_tr, y_tr):
-        _, y_proba_val, _, _ = train_fn(
-            [x_tr[i] for i in tr_idx],
-            [y_tr[i] for i in tr_idx],
-            [x_tr[i] for i in val_idx],
-            **params
-        )
-        meta_oof[val_idx, j] = y_proba_val
-
-    _, y_proba_te, _, _ = train_fn(x_tr, y_tr, x_te, **params)
-    meta_test[:, j, :] = y_proba_te
-
-meta_oof_feat = meta_oof[:, :, 1]
-meta_test_feat = meta_test[:, :, 1]
-
-meta_clf = LogisticRegression(max_iter=1000, random_state=0)
-meta_clf.fit(meta_oof_feat, y_tr)
-y_stack = meta_clf.predict(meta_test_feat)
-evaluate('Stacking (LogReg meta)', y_te, y_stack, 0, 0)
 ```

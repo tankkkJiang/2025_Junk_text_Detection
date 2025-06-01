@@ -192,51 +192,6 @@ if __name__ == "__main__":
             proba_list.append(y_proba)  # shape = (n_samples, n_classes)
             proba_wt.append(wt)
 
-    prob_models = [(fn, params, name)
-                   for fn, params, name in model_grid
-                   if fn is not tfidf_svc and fn is not hashing_sgd]
-    # 例如，tfidf_lr/tfidf_nb/w2v_avg_lr
-
-    n_meta = len(prob_models)
-    n_tr = len(x_tr)
-    n_te = len(x_te)
-
-    # 构造 OOF 概率矩阵 和 测试集概率矩阵
-    meta_oof = np.zeros((n_tr, n_meta, n_classes))
-    meta_test = np.zeros((n_te, n_meta, n_classes))
-
-    skf = StratifiedKFold(n_splits=5, shuffle=True, random_state=42)
-
-    for j, (train_fn, params, name) in enumerate(prob_models):
-        # — 5 折 CV 产生 OOF
-        for train_idx, val_idx in skf.split(x_tr, y_tr):
-            X_tr_f = [x_tr[i] for i in train_idx]
-            y_tr_f = [y_tr[i] for i in train_idx]
-            X_val_f = [x_tr[i] for i in val_idx]
-            # 训练并返回对齐后的概率
-            _, y_proba_val, vec, clf = train_fn(X_tr_f, y_tr_f, X_val_f, **params)
-            meta_oof[val_idx, j] = y_proba_val  # (len(val_idx), n_classes)
-
-        # — 用全量训练集再预测一次测试集概率
-        _, y_proba_te, vec, clf = train_fn(x_tr, y_tr, x_te, **params)
-        meta_test[:, j, :] = y_proba_te
-
-    # — 拼特征：每个样本有 n_meta * n_classes 个特征，或者只用正类概率 (二分类时)
-    # 下面示例取「正类」概率作为特征，若多分类可直接用 one-hot flatten
-    meta_oof_feat = meta_oof[:, :, 1]  # shape = (n_tr, n_meta)
-    meta_test_feat = meta_test[:, :, 1]  # shape = (n_te, n_meta)
-
-    # — 训练二级模型（Meta-classifier）
-    meta_clf = LogisticRegression(max_iter=1000, random_state=0)
-    meta_clf.fit(meta_oof_feat, y_tr)
-
-    # — 预测
-    y_stack = meta_clf.predict(meta_test_feat)
-
-    # — 评估
-    evaluate(f'Stacking (LogReg meta)', y_te, y_stack, 0, 0)
-
-
     # ---------- 多数投票 ----------
     all_preds = np.array(all_preds)  # (n_models, n_samples)
     y_vote = np.apply_along_axis(
