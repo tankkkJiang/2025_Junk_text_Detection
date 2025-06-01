@@ -188,13 +188,307 @@ weighted avg      0.450     0.435     0.442     16007
 
 ### 5.4 新模型：原始数据集 `dataset.txt` mode1: 55划分
 ```bash
+Tokenizing: 100%|██████████████████████████████████████████████████████████| 16007/16007 [00:00<00:00, 78153.22it/s]
+
+==== TF-IDF char1-3 + LinearSVC ====
+耗时: 1.46s
+Accuracy: 0.9927536231884058
+Macro-F1: 0.9915618655476506
+混淆矩阵:
+ [[2469   31]
+ [  27 5477]]
+分类报告:
+               precision    recall  f1-score   support
+
+           0      0.989     0.988     0.988      2500
+           1      0.994     0.995     0.995      5504
+
+    accuracy                          0.993      8004
+   macro avg      0.992     0.991     0.992      8004
+weighted avg      0.993     0.993     0.993      8004
+
+
+==== TF-IDF char1-3 + LogisticRegression ====
+耗时: 2.64s
+Accuracy: 0.9891304347826086
+Macro-F1: 0.98728540580049
+混淆矩阵:
+ [[2434   66]
+ [  21 5483]]
+分类报告:
+               precision    recall  f1-score   support
+
+           0      0.991     0.974     0.982      2500
+           1      0.988     0.996     0.992      5504
+
+    accuracy                          0.989      8004
+   macro avg      0.990     0.985     0.987      8004
+weighted avg      0.989     0.989     0.989      8004
+
+
+==== HashingVectorizer char1-3 + SGDClassifier ====
+耗时: 0.92s
+Accuracy: 0.9922538730634682
+Macro-F1: 0.9909400334233327
+混淆矩阵:
+ [[2447   53]
+ [   9 5495]]
+分类报告:
+               precision    recall  f1-score   support
+
+           0      0.996     0.979     0.987      2500
+           1      0.990     0.998     0.994      5504
+
+    accuracy                          0.992      8004
+   macro avg      0.993     0.989     0.991      8004
+weighted avg      0.992     0.992     0.992      8004
+
+
+==== TF-IDF char1-5 + MultinomialNB ====
+耗时: 2.62s
+Accuracy: 0.9901299350324838
+Macro-F1: 0.988545308571126
+混淆矩阵:
+ [[2474   26]
+ [  53 5451]]
+分类报告:
+               precision    recall  f1-score   support
+
+           0      0.979     0.990     0.984      2500
+           1      0.995     0.990     0.993      5504
+
+    accuracy                          0.990      8004
+   macro avg      0.987     0.990     0.989      8004
+weighted avg      0.990     0.990     0.990      8004
+
+
+==== Word2Vec-avg + LogisticRegression ====
+耗时: 6.05s
+Accuracy: 0.9780109945027486
+Macro-F1: 0.9745761004978067
+混淆矩阵:
+ [[2443   57]
+ [ 119 5385]]
+分类报告:
+               precision    recall  f1-score   support
+
+           0      0.954     0.977     0.965      2500
+           1      0.990     0.978     0.984      5504
+
+    accuracy                          0.978      8004
+   macro avg      0.972     0.978     0.975      8004
+weighted avg      0.978     0.978     0.978      8004
 ```
+
+![](media/2025-06-01-14-21-19.png)
+![](media/2025-06-01-14-21-29.png)
+![](media/2025-06-01-14-21-47.png)
 
 ### 5.5 新模型：原始数据集 `big_dataset.txt` mode1: 55划分
 ```bash
+(pytorch_lstm) jiangzhenglan@server-3:~/env/pytorch_lstm/BDPT/2025_Junk_text_Detection$ python multi_main.py
+Skipping invalid line: '0'
+Skipping invalid line: '0'
+Tokenizing: 100%|███████████████████████████████████████████████████████| 799998/799998 [00:02<00:00, 298737.21it/s]
+
+==== TF-IDF char1-3 + LinearSVC ====
+耗时: 29.07s
+Accuracy: 0.9941249853124633
+Macro-F1: 0.9835955506122749
+混淆矩阵:
+ [[359057    942]
+ [  1408  38592]]
+分类报告:
+               precision    recall  f1-score   support
+
+           0      0.996     0.997     0.997    359999
+           1      0.976     0.965     0.970     40000
+
+    accuracy                          0.994    399999
+   macro avg      0.986     0.981     0.984    399999
+weighted avg      0.994     0.994     0.994    399999
+
+
+==== TF-IDF char1-3 + LogisticRegression ====
+耗时: 41.02s
+Accuracy: 0.9895674739186848
+Macro-F1: 0.9704368173681224
+混淆矩阵:
+ [[358799   1200]
+ [  2973  37027]]
+分类报告:
+               precision    recall  f1-score   support
+
+           0      0.992     0.997     0.994    359999
+           1      0.969     0.926     0.947     40000
+
+    accuracy                          0.990    399999
+   macro avg      0.980     0.961     0.970    399999
+weighted avg      0.989     0.990     0.989    399999
+
+
+==== HashingVectorizer char1-3 + SGDClassifier ====
+耗时: 13.90s
+Accuracy: 0.9810024525061313
+Macro-F1: 0.9429387305686816
+混淆矩阵:
+ [[359548    451]
+ [  7148  32852]]
+分类报告:
+               precision    recall  f1-score   support
+
+           0      0.981     0.999     0.990    359999
+           1      0.986     0.821     0.896     40000
+
+    accuracy                          0.981    399999
+   macro avg      0.983     0.910     0.943    399999
+weighted avg      0.981     0.981     0.980    399999
+
+
+==== TF-IDF char1-5 + MultinomialNB ====
+耗时: 49.52s
+Accuracy: 0.9693599233998085
+Macro-F1: 0.9023823363632989
+混淆矩阵:
+ [[359536    463]
+ [ 11793  28207]]
+分类报告:
+               precision    recall  f1-score   support
+
+           0      0.968     0.999     0.983    359999
+           1      0.984     0.705     0.822     40000
+
+    accuracy                          0.969    399999
+   macro avg      0.976     0.852     0.902    399999
+weighted avg      0.970     0.969     0.967    399999
+
+
+==== Word2Vec-avg + LogisticRegression ====
+耗时: 98.85s
+Accuracy: 0.9471173677934195
+Macro-F1: 0.8403734833749077
+混淆矩阵:
+ [[352972   7027]
+ [ 14126  25874]]
+分类报告:
+               precision    recall  f1-score   support
+
+           0      0.962     0.980     0.971    359999
+           1      0.786     0.647     0.710     40000
+
+    accuracy                          0.947    399999
+   macro avg      0.874     0.814     0.840    399999
+weighted avg      0.944     0.947     0.945    399999
 ```
+
+![](media/2025-06-01-14-28-52.png)
+![](media/2025-06-01-14-29-02.png)
+![](media/2025-06-01-14-29-09.png)
 
 
 ### 5.6 新模型：mode2: `big_dataset.txt`训练，`dataset.txt`测试
 ```bash
+(pytorch_lstm) jiangzhenglan@server-3:~/env/pytorch_lstm/BDPT/2025_Junk_text_Detection$ python multi_main.py
+Skipping invalid line: '0'
+Skipping invalid line: '0'
+Tokenizing: 100%|███████████████████████████████████████████████████████| 799998/799998 [00:02<00:00, 303513.33it/s]
+Tokenizing: 100%|██████████████████████████████████████████████████████████| 16007/16007 [00:00<00:00, 77882.41it/s]
+
+==== TF-IDF char1-3 + LinearSVC ====
+耗时: 39.24s
+Accuracy: 0.6613981383144875
+Macro-F1: 0.6566467346075857
+混淆矩阵:
+ [[4352  648]
+ [4772 6235]]
+分类报告:
+               precision    recall  f1-score   support
+
+           0      0.477     0.870     0.616      5000
+           1      0.906     0.566     0.697     11007
+
+    accuracy                          0.661     16007
+   macro avg      0.691     0.718     0.657     16007
+weighted avg      0.772     0.661     0.672     16007
+
+
+==== TF-IDF char1-3 + LogisticRegression ====
+耗时: 48.11s
+Accuracy: 0.5824951583682139
+Macro-F1: 0.5823344390531933
+混淆矩阵:
+ [[4505  495]
+ [6188 4819]]
+分类报告:
+               precision    recall  f1-score   support
+
+           0      0.421     0.901     0.574      5000
+           1      0.907     0.438     0.591     11007
+
+    accuracy                          0.582     16007
+   macro avg      0.664     0.669     0.582     16007
+weighted avg      0.755     0.582     0.585     16007
+
+
+==== HashingVectorizer char1-3 + SGDClassifier ====
+耗时: 15.52s
+Accuracy: 0.41344411819828825
+Macro-F1: 0.39398969248317406
+混淆矩阵:
+ [[4743  257]
+ [9132 1875]]
+分类报告:
+               precision    recall  f1-score   support
+
+           0      0.342     0.949     0.503      5000
+           1      0.879     0.170     0.285     11007
+
+    accuracy                          0.413     16007
+   macro avg      0.611     0.559     0.394     16007
+weighted avg      0.712     0.413     0.353     16007
+
+
+==== TF-IDF char1-5 + MultinomialNB ====
+耗时: 68.47s
+Accuracy: 0.38258262010370464
+Macro-F1: 0.34412628691131386
+混淆矩阵:
+ [[5000    0]
+ [9883 1124]]
+分类报告:
+               precision    recall  f1-score   support
+
+           0      0.336     1.000     0.503      5000
+           1      1.000     0.102     0.185     11007
+
+    accuracy                          0.383     16007
+   macro avg      0.668     0.551     0.344     16007
+weighted avg      0.793     0.383     0.285     16007
+
+
+==== Word2Vec-avg + LogisticRegression ====
+耗时: 169.56s
+Accuracy: 0.4280002498906728
+Macro-F1: 0.40509343290781413
+混淆矩阵:
+ [[4996    4]
+ [9152 1855]]
+分类报告:
+               precision    recall  f1-score   support
+
+           0      0.353     0.999     0.522      5000
+           1      0.998     0.169     0.288     11007
+
+    accuracy                          0.428     16007
+   macro avg      0.675     0.584     0.405     16007
+weighted avg      0.796     0.428     0.361     16007
 ```
+
+![](media/2025-06-01-14-36-14.png)
+![](media/2025-06-01-14-36-25.png)
+![](media/2025-06-01-14-36-33.png)
+
+### 5.7 对比图`plot_results_compare.py`
+![](media/2025-06-01-17-39-53.png)
+![](media/2025-06-01-17-40-20.png)
+![](media/2025-06-01-17-41-02.png)
